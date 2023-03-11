@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth, signInWithPopup, signOut } from "firebase/auth";
-import { GoogleAuthProvider } from "firebase/auth";
+import { getDownloadURL, getStorage, ref } from "firebase/storage";
+import { useEffect } from "react";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -21,21 +21,21 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+const storage = getStorage();
 
-export const SignIn = () => {
-  try {
-    signInWithPopup(auth, provider)
-  } catch(err) {
-    console.error("Error in SignIn(): ", err);
-  }
-}
-
-export const SignOut = () => {
-  try {
-    signOut(auth);
-  } catch(err) {
-    console.error("Error in SignOut: ", err);
-  }
+export const downloadBG = (set: React.Dispatch<React.SetStateAction<string | undefined>>) => {
+  useEffect(() => {
+    const unsub = () => {
+      try {
+        const bgRef = ref(storage, "gs://where-is-the-character.appspot.com/bg.jpg");
+        getDownloadURL(bgRef)
+          .then((url) => {
+            set(url);
+          });
+      } catch(err) {
+        console.error("Error in downloadBG: ", err);
+      }
+    }
+    return () => unsub();
+  }, []);
 }
