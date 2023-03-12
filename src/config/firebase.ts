@@ -123,23 +123,35 @@ interface UserStats {
   time: string;
 }
 
-export const getTopUsers = async(): Promise<UserStats[]> => {
-  const collectionRef: CollectionReference<DocumentData> = collection(db, "game", "leaderboard", "users");
+export const getTopUsers = async(set: React.Dispatch<React.SetStateAction<UserStats[] | undefined>>) => {
+  useEffect(() => {
+    let canceled = false;
 
-  try {
-    const q = query(collectionRef, orderBy('time', 'asc'), limit(10));
-    const querySnapshot = await getDocs(q);
+    const unsub = async () => {
+      try {
+        const collectionRef: CollectionReference<DocumentData> = collection(db, "game", "leaderboard", "users");
+        const q = query(collectionRef, orderBy('time', 'asc'), limit(5));
+        const querySnapshot = await getDocs(q);
 
-    const topUsers: UserStats[] = [];
+        const topUsers: UserStats[] = [];
 
-    querySnapshot.forEach((doc: DocumentData) => {
-      const { name, time } = doc.data() as UserStats;
-      topUsers.push({ name, time });
-    });
+        querySnapshot.forEach((doc: DocumentData) => {
+          const { name, time } = doc.data() as UserStats;
+          topUsers.push({ name, time });
+        });
 
-    return topUsers;
-  } catch (err) {
-    console.error('Error in getTopUsers: ', err);
-    return [];
-  }
+        if (!canceled) {
+          set(topUsers);
+        }
+      } catch (err) {
+        console.error('Error in getTopUsers: ', err);
+      }
+    }
+
+    unsub();
+
+    return () => {
+      canceled = true;
+    };
+  }, []);
 }

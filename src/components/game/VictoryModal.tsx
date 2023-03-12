@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react'
 import { useEffect, useState } from 'react';
 import { submitUserTime } from '../../config/firebase';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   time: string;
@@ -20,6 +21,8 @@ interface Props {
 }
 
 export const VictoryModal = ({ time, allFound }: Props) => {
+  const navigate = useNavigate();
+
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [nickname, setNickname] = useState('');
@@ -48,6 +51,7 @@ export const VictoryModal = ({ time, allFound }: Props) => {
                 time: time,
               }
               await submitUserTime(userObj);
+              navigate('/leaderboard');
             }}>Submit</Button>
           </ModalFooter>
         </ModalContent>
