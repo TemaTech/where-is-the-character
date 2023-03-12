@@ -3,6 +3,8 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getDownloadURL, getStorage, ref } from "firebase/storage";
 import { useEffect } from "react";
+import { addDoc, collection, CollectionReference, doc, DocumentData, getDoc, getDocs, getFirestore, limit, orderBy, query } from "firebase/firestore";
+import 'firebase/firestore';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -22,6 +24,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const storage = getStorage();
+const db = getFirestore(app);
 
 export const downloadBG = (set: React.Dispatch<React.SetStateAction<string | undefined>>) => {
   useEffect(() => {
@@ -38,4 +41,105 @@ export const downloadBG = (set: React.Dispatch<React.SetStateAction<string | und
     }
     return () => unsub();
   }, []);
+}
+
+type DownloadCharacterAvatar = React.Dispatch<React.SetStateAction<string | undefined>>;
+
+export const downloadCharacterAvatars = (set1: DownloadCharacterAvatar, set2: DownloadCharacterAvatar, set3: DownloadCharacterAvatar) => {
+  useEffect(() => {
+    const unsub = () => {
+      try {
+        // Luigi
+        const avatar1Ref = ref(storage, "gs://where-is-the-character.appspot.com/dbluu19-00099188-0f27-44ed-aab2-db513c66ef20.png");
+        getDownloadURL(avatar1Ref)
+          .then((url) => {
+            set1(url);
+        });
+        // Bob-omb
+        const avatar2Ref = ref(storage, "gs://where-is-the-character.appspot.com/dfcopdq-3e38c893-e09a-4f34-aac6-6921ea81e2d3.png");
+        getDownloadURL(avatar2Ref)
+          .then((url) => {
+            set2(url);
+        });
+        // Donkey Kong
+        const avatar3Ref = ref(storage, "gs://where-is-the-character.appspot.com/54f2862be0933.png");
+        getDownloadURL(avatar3Ref)
+          .then((url) => {
+            set3(url);
+        });
+      } catch(err) {
+        console.error("Error in downloadCharacterAvatars: ", err);
+      }
+    }
+    return () => unsub();
+  }, []);
+}
+
+interface characterObj {
+  xStart: string;
+  xEnd: string;
+  yStart: string;
+  yEnd: string;
+}
+
+type SetCharCoordinates = React.Dispatch<React.SetStateAction<characterObj | undefined>>;
+
+export const getCharactersData = (setLuigi: SetCharCoordinates, setBobomb: SetCharCoordinates, setDonkeyKong: SetCharCoordinates) => {
+  useEffect(() => {
+    const unsub = () => {
+      try {
+        const docRef = doc(db, "game", "characters");
+        getDoc(docRef)
+          .then((doc) => {
+            setLuigi(doc.data()?.["Luigi"]);
+            setBobomb(doc.data()?.["Bob-omb"]);
+            setDonkeyKong(doc.data()?.["Donkey Kong"]);
+          });
+      } catch(err) {
+        console.error("Error in getCharacterData: ", err);
+      }
+    }
+    return () => unsub();
+  }, []);
+}
+
+interface UserObj {
+  name: string;
+  time: string;
+}
+
+export const submitUserTime = async (userObj: UserObj) => {
+  try {
+    const collectionRef = collection(db, "game", "leaderboard", "users");
+    await addDoc(collectionRef, userObj);
+  } catch(err) {
+    console.error("Error in submitUserTime: ", err);
+  }
+}
+
+
+interface UserStats {
+  name: string;
+  time: string;
+}
+
+export const getTopUsers = async(): Promise<UserStats[]> => {
+  const collectionRef: CollectionReference<DocumentData> = collection(db, "game", "leaderboard", "users");
+
+  try {
+    const q = query(collectionRef, orderBy('time', 'asc'), limit(10));
+    const querySnapshot = await getDocs(q);
+
+    const topUsers: UserStats[] = [];
+
+    querySnapshot.forEach((doc: DocumentData) => {
+      const { name, time } = doc.data() as UserStats;
+      topUsers.push({ name, time });
+    });
+
+    return topUsers;
+  } catch (err) {
+    console.error('Error in getTopUsers: ', err);
+    return [];
+  }
 }
