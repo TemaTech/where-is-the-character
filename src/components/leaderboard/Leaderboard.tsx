@@ -2,6 +2,7 @@ import { Flex, Heading } from "@chakra-ui/layout";
 import { useEffect, useState } from "react";
 import { getTopUsers } from "../../config/firebase";
 import { User } from './User'
+import { v4 as uuidv4 } from 'uuid';
 
 interface UserStats {
   name: string;
@@ -18,7 +19,7 @@ export const Leaderboard = () => {
       <Flex direction='column' gap='3' width='100%'>
         {
           leaderboard && leaderboard.map((user) => (
-            <User name={user.name} time={user.time} />
+            <User key={uuidv4()} name={user.name} time={user.time} />
           ))
         }
       </Flex>

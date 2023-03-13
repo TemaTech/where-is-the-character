@@ -1,14 +1,25 @@
 import { Image } from "@chakra-ui/image";
 import { Flex } from "@chakra-ui/layout";
+import { getDownloadURL, ref } from "@firebase/storage";
 import { useEffect, useState } from "react";
-import { downloadBG } from "../../config/firebase";
+import { storage } from "../../config/firebase";
 import { AvatarsAndTimer } from './AvatarsAndTimer'
 import { ClickMenu } from './ClickMenu'
 import { VictoryModal } from './VictoryModal'
 
 export const Game = () => {
   const [imgUrl, setImgUrl] = useState<string | undefined>(undefined);
-  downloadBG(setImgUrl);
+
+  useEffect(() => {
+    const getData = async () => {
+      const bgRef = ref(storage, "gs://where-is-the-character.appspot.com/bg.jpg");
+
+      const bgDownloadUrl = await getDownloadURL(bgRef);
+      setImgUrl(bgDownloadUrl);
+    }
+
+    getData();
+  }, []);
 
   const [isLuigiFound, setIsLuigiFound] = useState(false);
   const [isBobOmbFound, setIsBobOmbFound] = useState(false);
